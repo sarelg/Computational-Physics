@@ -12,6 +12,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      pages: write  # Added pages: write permission
 
     steps:
     - name: Checkout repository
