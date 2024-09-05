@@ -8,12 +8,39 @@ let pyodideReady = false;
 let gridSize = 20;  // Number of cells in each dimension
 let resolution = 4; // Number of subcells per cell for smoother rendering
 
+let gridSizeSlider, resolutionSlider;
+
+function resetInitialConditions() {
+  cellSize = width / gridSize;
+  params = [2.0, 1.0, 1.0, gridSize, gridSize];
+  state = initializeState(gridSize);
+}
+
 async function setup() {
   createCanvas(600, 600);
   cellSize = width / gridSize;
   frameRate(60);
   noLoop();  // Stop the draw loop initially
   
+  // Create sliders
+  gridSizeSlider = createSlider(10, 50, gridSize, 1);
+  gridSizeSlider.position(10, height + 10);
+  gridSizeSlider.style('width', '80px');
+  gridSizeSlider.input(() => {
+    gridSize = gridSizeSlider.value();
+    resetInitialConditions();
+  });
+
+  resolutionSlider = createSlider(1, 10, resolution, 1);
+  resolutionSlider.position(100, height + 10);
+  resolutionSlider.style('width', '80px');
+  resolutionSlider.input(() => {
+    resolution = resolutionSlider.value();
+    resetInitialConditions();
+  });
+
+  resetInitialConditions();  // Initialize the state
+
   // Initialize parameters:
   // params[0]: a - Thermal diffusivity coefficient
   // params[1]: dx - Grid spacing in x-direction
@@ -23,21 +50,8 @@ async function setup() {
   params = [2.0, 1.0, 1.0, gridSize, gridSize];
   
   // Initialize state (gridSize x gridSize grid of temperatures)
-  state = Array(gridSize * gridSize).fill(0);
-  
-  // Define initial conditions as a 2D array
-  let initialConditions = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
 
-  // Set heat bath at the left edge
-  for (let i = 0; i < gridSize; i++) {
-    initialConditions[i][0] = 100
-    initialConditions[i][gridSize-1] = -100;
-    initialConditions[0][i] = 200;
-    initialConditions[gridSize-1][i] = -200;
-  }
-
-  // Flatten the 2D array into the state array
-  state = initialConditions.flat();
+  state = initializeState(gridSize);
 
   // Load Pyodide
   try {
@@ -68,7 +82,9 @@ async function setup() {
 }
 
 async function draw() {
-  // background(220);
+  // Update gridSize and resolution from sliders
+  gridSize = gridSizeSlider.value();
+  resolution = resolutionSlider.value();
   
   if (pyodideReady) {
     // Call Python function to get next state
@@ -98,6 +114,22 @@ async function draw() {
   }
 }
 
+function initializeState(gridSize) {
+  // Define initial conditions as a 2D array
+  let initialConditions = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+
+  // Set heat bath at the left edge
+  for (let i = 0; i < gridSize; i++) {
+    initialConditions[i][0] = 100;
+    initialConditions[i][gridSize-1] = -100;
+    initialConditions[0][i] = 200;
+    initialConditions[gridSize-1][i] = -200;
+  }
+
+  // Flatten the 2D array into the state array
+  return initialConditions.flat();
+}
+
 function drawSolution() {
   let subCellSize = width / ((gridSize - 2) * resolution);
 
@@ -124,7 +156,7 @@ function drawSolution() {
       let top = tl * (1 - fx) + tr * fx;
       let bottom = bl * (1 - fx) + br * fx;
       let temp = top * (1 - fy) + bottom * fy;
-      
+
       let t = map(temp, -100, 100, 0, 1); // Normalize temperature to 0-1 range
       let col = highContrastColormap(t);
       fill(col);
