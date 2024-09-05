@@ -10,12 +10,6 @@ let resolution = 4; // Number of subcells per cell for smoother rendering
 
 let gridSizeSlider, resolutionSlider;
 
-function resetInitialConditions() {
-  cellSize = width / gridSize;
-  params = [2.0, 1.0, 1.0, gridSize, gridSize];
-  state = initializeState(gridSize);
-}
-
 async function setup() {
   createCanvas(600, 600);
   cellSize = width / gridSize;
@@ -26,20 +20,10 @@ async function setup() {
   gridSizeSlider = createSlider(10, 50, gridSize, 1);
   gridSizeSlider.position(10, height + 10);
   gridSizeSlider.style('width', '80px');
-  gridSizeSlider.input(() => {
-    gridSize = gridSizeSlider.value();
-    resetInitialConditions();
-  });
 
-  resolutionSlider = createSlider(1, 10, resolution, 1);
-  resolutionSlider.position(100, height + 10);
+  resolutionSlider = createSlider(1, 8, resolution, 1);
+  resolutionSlider.position(10, height + 40);
   resolutionSlider.style('width', '80px');
-  resolutionSlider.input(() => {
-    resolution = resolutionSlider.value();
-    resetInitialConditions();
-  });
-
-  resetInitialConditions();  // Initialize the state
 
   // Initialize parameters:
   // params[0]: a - Thermal diffusivity coefficient
@@ -82,9 +66,20 @@ async function setup() {
 }
 
 async function draw() {
-  // Update gridSize and resolution from sliders
-  gridSize = gridSizeSlider.value();
-  resolution = resolutionSlider.value();
+  // Check if grid size or resolution has changed
+  let newGridSize = gridSizeSlider.value();
+  let newResolution = resolutionSlider.value();
+  let sliderChanged = newGridSize !== gridSize || newResolution !== resolution;
+
+  if (sliderChanged) {
+    gridSize = newGridSize;
+    resolution = newResolution;
+    // Reinitialize state and params here if needed
+    state = initializeState(gridSize);
+    params = [2.0, 1.0, 1.0, gridSize, gridSize];
+    // state = Array(gridSize * gridSize).fill(0);
+    // params = [2.0, 1.0, 1.0, gridSize, gridSize];
+  }
   
   if (pyodideReady) {
     // Call Python function to get next state
@@ -156,7 +151,7 @@ function drawSolution() {
       let top = tl * (1 - fx) + tr * fx;
       let bottom = bl * (1 - fx) + br * fx;
       let temp = top * (1 - fy) + bottom * fy;
-
+      
       let t = map(temp, -100, 100, 0, 1); // Normalize temperature to 0-1 range
       let col = highContrastColormap(t);
       fill(col);
