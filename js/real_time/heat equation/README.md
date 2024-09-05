@@ -13,8 +13,8 @@ This project simulates the heat equation in real-time using p5.js and Pyodide. T
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/heat-equation-simulation.git
-   cd heat-equation-simulation
+   git clone https://github.com/sarelg/Computational-Physics.git
+   cd js/real_time/heat\ equation/
    ```
 
 2. Ensure you have the following files in your project directory:
@@ -40,12 +40,6 @@ This project simulates the heat equation in real-time using p5.js and Pyodide. T
 - Use the sliders to adjust the grid size and resolution.
 - The current values of the grid size and resolution are displayed next to the sliders.
 - The canvas will update in real-time to reflect the changes.
-
-## Requirements
-
-- p5.js
-- Pyodide
-- A modern web browser
 
 ## File Structure
 
