@@ -20,6 +20,7 @@ def solve_ode(t, y, params):
     return dydt
 
 def next_state(current_state, dt, params):    
+    
     # Extract grid sizes from params
     sizex, sizey = int(params[-2]), int(params[-1])  # Assuming the last two parameters are grid sizes
 

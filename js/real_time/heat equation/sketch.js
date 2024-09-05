@@ -17,13 +17,19 @@ async function setup() {
   noLoop();  // Stop the draw loop initially
   
   // Create sliders
-  gridSizeSlider = createSlider(10, 50, gridSize, 1);
-  gridSizeSlider.position(10, height + 10);
-  gridSizeSlider.style('width', '80px');
+  let vSlider = 100
+
+  gridSizeSlider = createSlider(10, 30, gridSize, 1);
+  gridSizeSlider.position(55, vSlider);
+  gridSizeSlider.style('width', '200px');  // Make the slider bigger
 
   resolutionSlider = createSlider(1, 8, resolution, 1);
-  resolutionSlider.position(10, height + 40);
-  resolutionSlider.style('width', '80px');
+  resolutionSlider.position(55, vSlider + 60);
+  resolutionSlider.style('width', '200px');  // Make the slider bigger
+
+  // Create text elements to display current values
+  createP(`Grid Size: ${gridSize}`).position(110, vSlider + 10).id('gridSizeText').style('font-family', 'Roboto').style('color', 'white');
+  createP(`Resolution: ${resolution}`).position(110, vSlider + 60 + 10).id('resolutionText').style('font-family', 'Roboto').style('color', 'white');
 
   // Initialize parameters:
   // params[0]: a - Thermal diffusivity coefficient
@@ -34,7 +40,6 @@ async function setup() {
   params = [2.0, 1.0, 1.0, gridSize, gridSize];
   
   // Initialize state (gridSize x gridSize grid of temperatures)
-
   state = initializeState(gridSize);
 
   // Load Pyodide
@@ -70,24 +75,31 @@ async function draw() {
   let newGridSize = gridSizeSlider.value();
   let newResolution = resolutionSlider.value();
   let sliderChanged = newGridSize !== gridSize || newResolution !== resolution;
-
+  
   if (sliderChanged) {
-    gridSize = newGridSize;
-    resolution = newResolution;
-    // Reinitialize state and params here if needed
-    state = initializeState(gridSize);
-    params = [2.0, 1.0, 1.0, gridSize, gridSize];
-    // state = Array(gridSize * gridSize).fill(0);
-    // params = [2.0, 1.0, 1.0, gridSize, gridSize];
+    // Update text elements with new values
+    select('#gridSizeText').html(`Grid Size: ${newGridSize}`);
+    select('#resolutionText').html(`Resolution: ${newResolution}`);
   }
   
   if (pyodideReady) {
     // Call Python function to get next state
     try {
-      state = await pyodide.runPythonAsync(`
+      if (sliderChanged) {
+        gridSize = newGridSize;
+        resolution = newResolution;
+        // Reinitialize state and params here if needed
+        state = initializeState(gridSize);
+        params = [2.0, 1.0, 1.0, gridSize, gridSize];
+      }
+      
+      const updateState = JSON.stringify(state);
+      const updateParams = JSON.stringify(params);
+      
+      state = await pyodide.runPython(`
         import numpy as np
         import js
-        np.array(next_state(${JSON.stringify(state)}, 0.1, ${JSON.stringify(params)})).tolist()
+        np.array(next_state(${updateState}, 0.1, ${updateParams})).tolist()
       `);
       
       // Convert the returned Python object to a JavaScript array
