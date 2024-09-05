@@ -3,33 +3,52 @@ let state;
 let params;
 let cellSize;
 let pyodideReady = false;
-
-// New parameters for grid size and resolution
 let gridSize = 20;  // Number of cells in each dimension
 let resolution = 4; // Number of subcells per cell for smoother rendering
-
+let leftTemp = 100;
+let rightTemp = -100;
+let topTemp = -200;
+let bottomTemp = 200;
 let gridSizeSlider, resolutionSlider;
+let leftTempInput, rightTempInput, topTempInput, bottomTempInput, updateButton;
 
 async function setup() {
-  createCanvas(600, 600);
+  createCanvas(600, 600).parent('canvas-container');  // Append the canvas to the container div
   cellSize = width / gridSize;
   frameRate(60);
   noLoop();  // Stop the draw loop initially
   
   // Create sliders
-  let vSlider = 100
+  let vSlider = 250
 
   gridSizeSlider = createSlider(10, 30, gridSize, 1);
-  gridSizeSlider.position(55, vSlider);
+  gridSizeSlider.position(1020, vSlider);
   gridSizeSlider.style('width', '200px');  // Make the slider bigger
 
   resolutionSlider = createSlider(1, 8, resolution, 1);
-  resolutionSlider.position(55, vSlider + 60);
+  resolutionSlider.position(1020, vSlider + 60);
   resolutionSlider.style('width', '200px');  // Make the slider bigger
 
   // Create text elements to display current values
-  createP(`Grid Size: ${gridSize}`).position(110, vSlider + 10).id('gridSizeText').style('font-family', 'Roboto').style('color', 'white');
-  createP(`Resolution: ${resolution}`).position(110, vSlider + 60 + 10).id('resolutionText').style('font-family', 'Roboto').style('color', 'white');
+  createP(`Grid Size: ${gridSize}`).position(1075, vSlider + 10).id('gridSizeText').style('font-family', 'Roboto').style('color', 'white');
+  createP(`Resolution: ${resolution}`).position(1075, vSlider + 60 + 10).id('resolutionText').style('font-family', 'Roboto').style('color', 'white');
+  // Create input fields and button for temperature values
+  let setupHeight = 200
+
+  createP('Left Temperature:').position(50, setupHeight).style('color', 'white');
+  leftTempInput = createInput(leftTemp.toString()).position(210, setupHeight + 15).style('width', '50px').style('background-color', 'black').style('color', 'white');
+
+  createP('Right Temperature:').position(50, setupHeight + 60).style('color', 'white');
+  rightTempInput = createInput(rightTemp.toString()).position(210, setupHeight + 15 + 60).style('width', '50px').style('background-color', 'black').style('color', 'white');
+
+  createP('Top Temperature:').position(50, setupHeight + 120).style('color', 'white');
+  topTempInput = createInput(topTemp.toString()).position(210, setupHeight + 15 + 120).style('width', '50px').style('background-color', 'black').style('color', 'white');
+
+  createP('Bottom Temperature:').position(50, setupHeight + 180).style('color', 'white');
+  bottomTempInput = createInput(bottomTemp.toString()).position(210, setupHeight + 15 + 180).style('width', '50px').style('background-color', 'black').style('color', 'white');
+
+  updateButton = createButton('Update Values').position(50, setupHeight + 260).style('padding', '10px 20px').style('background-color', '#007BFF').style('color', 'white').style('border', 'none').style('cursor', 'pointer');
+  updateButton.mousePressed(updateValues);
 
   // Initialize parameters:
   // params[0]: a - Thermal diffusivity coefficient
@@ -40,7 +59,7 @@ async function setup() {
   params = [2.0, 1.0, 1.0, gridSize, gridSize];
   
   // Initialize state (gridSize x gridSize grid of temperatures)
-  state = initializeState(gridSize);
+  state = initializeState(gridSize, leftTemp, rightTemp, topTemp, bottomTemp);
 
   // Load Pyodide
   try {
@@ -89,7 +108,7 @@ async function draw() {
         gridSize = newGridSize;
         resolution = newResolution;
         // Reinitialize state and params here if needed
-        state = initializeState(gridSize);
+        state = initializeState(gridSize, leftTemp, rightTemp, topTemp, bottomTemp);
         params = [2.0, 1.0, 1.0, gridSize, gridSize];
       }
       
@@ -121,20 +140,35 @@ async function draw() {
   }
 }
 
-function initializeState(gridSize) {
+function initializeState(gridSize, leftTemp, rightTemp, topTemp, bottomTemp) {
   // Define initial conditions as a 2D array
   let initialConditions = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
 
-  // Set heat bath at the left edge
+  // Set heat bath at the edges
   for (let i = 0; i < gridSize; i++) {
-    initialConditions[i][0] = 100;
-    initialConditions[i][gridSize-1] = -100;
-    initialConditions[0][i] = 200;
-    initialConditions[gridSize-1][i] = -200;
+    initialConditions[i][0] = leftTemp;
+    initialConditions[i][gridSize-1] = rightTemp;
+    initialConditions[0][i] = bottomTemp;
+    initialConditions[gridSize-1][i] = topTemp;
   }
 
   // Flatten the 2D array into the state array
   return initialConditions.flat();
+}
+
+function updateValues() {
+  // Get the new temperature values from the input fields
+  leftTemp = parseFloat(leftTempInput.value());
+  rightTemp = parseFloat(rightTempInput.value());
+  topTemp = parseFloat(topTempInput.value());
+  bottomTemp = parseFloat(bottomTempInput.value());
+
+  // Reinitialize the state with the new temperature values
+  state = initializeState(gridSize, leftTemp, rightTemp, topTemp, bottomTemp);
+  params = [2.0, 1.0, 1.0, gridSize, gridSize];
+
+  // Redraw the canvas with the updated state
+  drawSolution();
 }
 
 function drawSolution() {
