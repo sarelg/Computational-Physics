@@ -19,7 +19,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: js/real_time/heat%20equation
+        path: js/real_time/heat_equation
 
     - name: Deploy to Github Pages
       uses: actions/deploy-pages@v4
