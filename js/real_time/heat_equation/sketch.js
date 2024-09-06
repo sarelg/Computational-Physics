@@ -13,52 +13,44 @@ let gridSizeSlider, resolutionSlider;
 let leftTempInput, rightTempInput, topTempInput, bottomTempInput, updateButton;
 
 async function setup() {
-  createCanvas(600, 600).parent('canvas-container');  // Append the canvas to the container div
+  let canvas = createCanvas(600, 600).parent('canvas-container');
   cellSize = width / gridSize;
   frameRate(60);
   noLoop();  // Stop the draw loop initially
-  
+
   // Create sliders
-  let vSlider = 250
+  let rightSetupContainer = select('#right-setup-container');
 
-  gridSizeSlider = createSlider(10, 30, gridSize, 1);
-  gridSizeSlider.position(1020, vSlider);
-  gridSizeSlider.style('width', '200px');  // Make the slider bigger
+  gridSizeSlider = createSlider(10, 30, gridSize, 1).parent(rightSetupContainer);
+  createP(`Grid Size: ${gridSize}`).id('gridSizeText').parent(rightSetupContainer).style('color', 'white');
 
-  resolutionSlider = createSlider(1, 8, resolution, 1);
-  resolutionSlider.position(1020, vSlider + 60);
-  resolutionSlider.style('width', '200px');  // Make the slider bigger
+  resolutionSlider = createSlider(1, 8, resolution, 1).parent(rightSetupContainer);
+  createP(`Resolution: ${resolution}`).id('resolutionText').parent(rightSetupContainer).style('color', 'white');
 
-  // Create text elements to display current values
-  createP(`Grid Size: ${gridSize}`).position(1075, vSlider + 10).id('gridSizeText').style('font-family', 'Roboto').style('color', 'white');
-  createP(`Resolution: ${resolution}`).position(1075, vSlider + 60 + 10).id('resolutionText').style('font-family', 'Roboto').style('color', 'white');
   // Create input fields and button for temperature values
-  let setupHeight = 200
+  let leftSetupContainer = select('#left-setup-container');
 
-  createP('Left Temperature:').position(50, setupHeight).style('color', 'white');
-  leftTempInput = createInput(leftTemp.toString()).position(210, setupHeight + 15).style('width', '50px').style('background-color', 'black').style('color', 'white');
+  let leftTempContainer = createDiv().parent(leftSetupContainer).style('display', 'flex').style('justify-content', 'space-between').style('width', '90%');
+  createP('Left Temperature:').parent(leftTempContainer).style('color', 'white').style('margin', '10px');
+  leftTempInput = createInput(leftTemp.toString()).parent(leftTempContainer).style('background', 'black').style('color', 'white').style('width', '40px').style('text-align', 'center');
 
-  createP('Right Temperature:').position(50, setupHeight + 60).style('color', 'white');
-  rightTempInput = createInput(rightTemp.toString()).position(210, setupHeight + 15 + 60).style('width', '50px').style('background-color', 'black').style('color', 'white');
+  let rightTempContainer = createDiv().parent(leftSetupContainer).style('display', 'flex').style('justify-content', 'space-between').style('width', '90%');
+  createP('Right Temperature:').parent(rightTempContainer).style('color', 'white').style('margin', '10px');
+  rightTempInput = createInput(rightTemp.toString()).parent(rightTempContainer).style('background', 'black').style('color', 'white').style('width', '40px').style('text-align', 'center');
 
-  createP('Top Temperature:').position(50, setupHeight + 120).style('color', 'white');
-  topTempInput = createInput(topTemp.toString()).position(210, setupHeight + 15 + 120).style('width', '50px').style('background-color', 'black').style('color', 'white');
+  let topTempContainer = createDiv().parent(leftSetupContainer).style('display', 'flex').style('justify-content', 'space-between').style('width', '90%');
+  createP('Top Temperature:').parent(topTempContainer).style('color', 'white').style('margin', '10px');
+  topTempInput = createInput(topTemp.toString()).parent(topTempContainer).style('background', 'black').style('color', 'white').style('width', '40px').style('text-align', 'center');
 
-  createP('Bottom Temperature:').position(50, setupHeight + 180).style('color', 'white');
-  bottomTempInput = createInput(bottomTemp.toString()).position(210, setupHeight + 15 + 180).style('width', '50px').style('background-color', 'black').style('color', 'white');
-
-  updateButton = createButton('Update Values').position(50, setupHeight + 260).style('padding', '10px 20px').style('background-color', '#007BFF').style('color', 'white').style('border', 'none').style('cursor', 'pointer');
+  let bottomTempContainer = createDiv().parent(leftSetupContainer).style('display', 'flex').style('justify-content', 'space-between').style('width', '90%');
+  createP('Bottom Temperature:').parent(bottomTempContainer).style('color', 'white').style('margin', '10px');
+  bottomTempInput = createInput(bottomTemp.toString()).parent(bottomTempContainer).style('background', 'black').style('color', 'white').style('width', '40px').style('text-align', 'center');
+  
+  updateButton = createButton('Update Values').parent(leftSetupContainer);
   updateButton.mousePressed(updateValues);
 
   // Initialize parameters:
-  // params[0]: a - Thermal diffusivity coefficient
-  // params[1]: dx - Grid spacing in x-direction
-  // params[2]: dy - Grid spacing in y-direction
-  // params[3]: sizex - Number of grid points in x-direction
-  // params[4]: sizey - Number of grid points in y-direction
   params = [2.0, 1.0, 1.0, gridSize, gridSize];
-  
-  // Initialize state (gridSize x gridSize grid of temperatures)
   state = initializeState(gridSize, leftTemp, rightTemp, topTemp, bottomTemp);
 
   // Load Pyodide
